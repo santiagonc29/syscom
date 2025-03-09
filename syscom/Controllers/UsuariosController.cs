@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using iText.IO.Image;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +39,7 @@ namespace syscom.Controllers
             }
             return View(await syscomdbContext.ToListAsync());
         }
-
+        
         private int CalcularDiasHabiles(DateOnly inicio, DateOnly? fin, List<DateTime> diasFestivos)
         {
             DateTime fechaInicio = inicio.ToDateTime(TimeOnly.MinValue);
@@ -94,11 +99,54 @@ namespace syscom.Controllers
             {
                 _context.Add(usuario);
                 await _context.SaveChangesAsync();
+
+                string rutaPdf = GenerarPdf(usuario);
+
+                // Guardar la ruta en la base de datos
+                usuario.Contrato = rutaPdf;
+                _context.Update(usuario);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
             ViewData["IdRol"] = new SelectList(_context.Roles, "Id", "Id", usuario.IdRol);
             return View(usuario);
         }
+
+        //Generador de PDF del contrato
+        private string GenerarPdf(Usuario usuario)
+        {
+            // Ruta donde se guardarán los PDFs (puedes cambiarla según sea necesario)
+            string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Contratos");
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath); // Crear la carpeta si no existe
+            }
+
+            // Nombre del archivo con el ID del usuario
+            string fileName = $"Contrato_{usuario.Nombre}.pdf";
+            string filePath = Path.Combine(folderPath, fileName);
+
+            // Crear el PDF usando iText7
+            using (FileStream stream = new FileStream(filePath, FileMode.Create))
+            {
+                PdfWriter writer = new PdfWriter(stream, new WriterProperties());
+                PdfDocument pdf = new PdfDocument(writer);
+                Document document = new Document(pdf);
+
+                document.Add(new Paragraph("Bogotá,Colombia").SetFontSize(11));
+                document.Add(new Paragraph($"Fecha de Creación: {usuario.FechaIngreso}"));
+                document.Add(new Paragraph($"Por medio del presente contrato se ratifica que {usuario.Nombre} Acepta los terminos y condiciones"));
+                document.Add(new Paragraph($"Firma: {usuario.Firma}"));
+
+
+                document.Close();
+            }
+
+            // Retornar la ruta relativa del PDF para guardarla en la base de datos
+            return $"/Contratos/{fileName}";
+        }
+
 
         // GET: Usuarios/Edit/5
         public async Task<IActionResult> Edit(int? id)

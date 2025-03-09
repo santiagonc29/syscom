@@ -30,5 +30,6 @@ public partial class Usuario
     public virtual Role? IdRolNavigation { get; set; }
 
     [NotMapped]
+    [Display(Name = "Dias trabajados")]
     public int DiasHabilesTrabajados { get; set; }
 }
