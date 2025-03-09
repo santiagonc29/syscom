@@ -4,7 +4,7 @@ Este proyecto es una prueba tecnica desarrollada usando C#, ASP.NET, con Modelo 
 
 ## Librerias usadas
 
-En este caso se usaron se utlizaron 6 librerias:
+En este caso se utlizaron 6 librerias:
 
 | Libreria | Link 
 |-----------|-----------
